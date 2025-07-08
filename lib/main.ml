@@ -170,20 +170,42 @@ let%expect_test "winning_moves_with_three_spots" =
         ({ row = 2; column = 2 }, X);
       ]
   in
-  print_s [%sexp (winning_moves ~me:Piece.X data: Position.t list)];
+  print_s [%sexp (winning_moves ~me:Piece.X data : Position.t list)];
   [%expect
     {| (((row 0) (column 2)) ((row 1) (column 1)) ((row 2) (column 0))) |}];
   return ()
 
 let%expect_test "winning_moves_full_board" =
   let full_board = win_for_x in
-  print_s [%sexp (winning_moves ~me:Piece.O full_board: Position.t list)];
+  print_s [%sexp (winning_moves ~me:Piece.O full_board : Position.t list)];
   [%expect {| () |}];
   return ()
 
 (* Exercise 4 *)
 let losing_moves ~(me : Piece.t) (game : Game.t) : Position.t list =
-  winning_moves ~me:(Piece.flip me) game
+  available_moves game
+  |> List.filter ~f:(fun move ->
+         match
+           winning_moves ~me:(Piece.flip me) (Game.set_piece game move me)
+         with
+         | [] -> false
+         | _ -> true)
+
+let%expect_test "everywhere_but_one_winning_move" =
+  let data =
+    init_game
+      [
+        ({ row = 0; column = 0 }, X);
+        ({ row = 1; column = 0 }, X);
+        ({ row = 0; column = 2 }, O);
+      ]
+  in
+  print_s [%sexp (losing_moves ~me:Piece.O data : Position.t list)];
+  [%expect
+    {|
+      (((row 0) (column 1)) ((row 1) (column 1)) ((row 1) (column 2))
+       ((row 2) (column 1)) ((row 2) (column 2))) |}];
+  return ()
 
 let exercise_one =
   Command.async ~summary:"Exercise 1: Where can I move?"
