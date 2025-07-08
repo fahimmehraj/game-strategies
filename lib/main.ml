@@ -29,30 +29,19 @@ let non_win =
       ({ row = 2; column = 0 }, O);
     ]
 
+(* Use String.concat seperator logic to clean it up *)
 let print_game (game : Game.t) =
   let board_length = Game_kind.board_length game.game_kind in
-  let num_display_rows = (2 * board_length) - 1 in
-  let num_display_cols = (board_length * 4) - 3 in
-  let board_as_list =
-    List.init num_display_rows ~f:(fun row ->
-        match row % 2 = 0 with
-        | true ->
-            List.init board_length ~f:(fun column ->
-                let following_string =
-                  match column = board_length - 1 with
-                  | true -> ""
-                  | false -> " | "
-                in
-                (match
-                   Map.find game.board { Position.row = row / 2; column }
-                 with
-                | Some piece -> Piece.to_string piece
-                | None -> " ")
-                ^ following_string)
-            |> String.concat
-        | false -> String.init num_display_cols ~f:(fun _ -> '-'))
-  in
-  List.iter board_as_list ~f:print_endline
+  let num_dashes = (board_length * 4) - 3 in
+  let row_sep = "\n" ^ String.make num_dashes '-' ^ "\n" in
+
+  List.init board_length ~f:(fun row ->
+      List.init board_length ~f:(fun column ->
+          match Map.find game.board { Position.row; column } with
+          | Some piece -> Piece.to_string piece
+          | None -> " ")
+      |> String.concat ~sep:" | ")
+  |> String.concat ~sep:row_sep |> print_endline
 
 let%expect_test "print_win_for_x" =
   print_game win_for_x;
@@ -79,7 +68,7 @@ let%expect_test "print_non_win" =
   return ()
 
 let all_positions (game : Game.t) : Position.t list =
-  let one_row = List.init (game.game_kind |> Game_kind.board_length) ~f:Fn.id in
+  let one_row = List.init (Game_kind.board_length game.game_kind) ~f:Fn.id in
   List.cartesian_product one_row one_row
   |> List.map ~f:(fun (x, y) -> { Position.row = x; column = y })
 
@@ -90,11 +79,11 @@ let available_moves (game : Game.t) : Position.t list =
       Option.is_none (Map.find game.board key))
 
 let%expect_test "available_moves" =
-  print_s (sexp_of_list Position.sexp_of_t (available_moves win_for_x));
+  print_s [%sexp (available_moves win_for_x : Position.t list)];
   [%expect {|
   ()
   |}];
-  print_s (sexp_of_list Position.sexp_of_t (available_moves non_win));
+  print_s [%sexp (available_moves non_win : Position.t list)];
   [%expect
     {|
   (((row 0) (column 1)) ((row 0) (column 2)) ((row 1) (column 1))
@@ -105,6 +94,7 @@ let%expect_test "available_moves" =
 (* Exercise 2 *)
 let evaluate (game : Game.t) : Evaluation.t =
   let get_piece position = Map.find game.board position in
+
   let rec is_winnable ~target position depth direction =
     match
       (depth >= Game_kind.win_length game.game_kind, get_piece position)
@@ -125,11 +115,10 @@ let evaluate (game : Game.t) : Evaluation.t =
   else
     let all_positions = all_positions game in
     match
-      List.fold ~init:None all_positions ~f:(fun winner_found position ->
-          match (winner_found, get_piece position) with
-          | Some _, _ -> winner_found
-          | None, None -> None
-          | None, Some target ->
+      List.find_map all_positions ~f:(fun position ->
+          match get_piece position with
+          | None -> None
+          | Some target ->
               let win_condition_exists =
                 List.exists Position.half_offsets ~f:(fun direction ->
                     is_winnable ~target position 0 direction)
@@ -144,19 +133,19 @@ let evaluate (game : Game.t) : Evaluation.t =
 
 let%expect_test "evaluate_win_for_x" =
   let result = evaluate win_for_x in
-  print_s (Evaluation.sexp_of_t result);
+  print_s [%sexp (result : Evaluation.t)];
   [%expect {| (Game_over (winner (X))) |}];
   return ()
 
 let%expect_test "evaluate_continuing_game" =
   let result = evaluate non_win in
-  print_s (Evaluation.sexp_of_t result);
+  print_s [%sexp (result : Evaluation.t)];
   [%expect {| Game_continues |}];
   return ()
 
 let%expect_test "evaluate_illegal_board" =
   let illegal_game = init_game [ ({ row = 8; column = 2 }, X) ] in
-  print_s (Evaluation.sexp_of_t (evaluate illegal_game));
+  print_s [%sexp (evaluate illegal_game : Evaluation.t)];
   [%expect {| Illegal_move |}];
   return ()
 
@@ -181,23 +170,20 @@ let%expect_test "winning_moves_with_three_spots" =
         ({ row = 2; column = 2 }, X);
       ]
   in
-  print_s (sexp_of_list Position.sexp_of_t (winning_moves ~me:Piece.X data));
+  print_s [%sexp (winning_moves ~me:Piece.X data: Position.t list)];
   [%expect
     {| (((row 0) (column 2)) ((row 1) (column 1)) ((row 2) (column 0))) |}];
   return ()
 
 let%expect_test "winning_moves_full_board" =
   let full_board = win_for_x in
-  print_s
-    (sexp_of_list Position.sexp_of_t (winning_moves ~me:Piece.O full_board));
+  print_s [%sexp (winning_moves ~me:Piece.O full_board: Position.t list)];
   [%expect {| () |}];
   return ()
 
 (* Exercise 4 *)
 let losing_moves ~(me : Piece.t) (game : Game.t) : Position.t list =
-  ignore me;
-  ignore game;
-  failwith "Implement me!"
+  winning_moves ~me:(Piece.flip me) game
 
 let exercise_one =
   Command.async ~summary:"Exercise 1: Where can I move?"
