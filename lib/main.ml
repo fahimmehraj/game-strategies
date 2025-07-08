@@ -78,27 +78,25 @@ let%expect_test "print_non_win" =
       |}];
   return ()
 
+let all_positions (game : Game.t) : Position.t list =
+  let one_row = List.init (game.game_kind |> Game_kind.board_length) ~f:Fn.id in
+  List.cartesian_product one_row one_row
+  |> List.map ~f:(fun (x, y) -> { Position.row = x; column = y })
+
 (* Exercise 1 *)
 let available_moves (game : Game.t) : Position.t list =
-  let one_row =
-    List.init (game.game_kind |> Game_kind.board_length) ~f:(fun i -> i)
-  in
-  let all_positions =
-    List.cartesian_product one_row one_row
-    |> List.map ~f:(fun (x, y) -> { Position.row = x; column = y })
-  in
+  let all_positions = all_positions game in
   List.filter all_positions ~f:(fun key ->
       Option.is_none (Map.find game.board key))
 
 let%expect_test "available_moves" =
   print_s (sexp_of_list Position.sexp_of_t (available_moves win_for_x));
-  [%expect
-  {|
+  [%expect {|
   ()
   |}];
   print_s (sexp_of_list Position.sexp_of_t (available_moves non_win));
   [%expect
-  {|
+    {|
   (((row 0) (column 1)) ((row 0) (column 2)) ((row 1) (column 1))
    ((row 1) (column 2)) ((row 2) (column 1)))
   |}];
@@ -106,8 +104,65 @@ let%expect_test "available_moves" =
 
 (* Exercise 2 *)
 let evaluate (game : Game.t) : Evaluation.t =
-  ignore game;
-  failwith "Implement me!"
+  (* check if all pieces in bound *)
+  if
+    Map.existsi game.board ~f:(fun ~key ~data:_ ->
+        not (Position.in_bounds key ~game_kind:game.game_kind))
+  then Evaluation.Illegal_move
+  else
+    let get_piece position = Map.find game.board position in
+    let rec helper ~target position depth direction =
+      match
+        (depth >= Game_kind.win_length game.game_kind, get_piece position)
+      with
+      | true, _ -> true
+      | false, None -> false
+      | false, Some piece -> (
+          match Piece.equal target piece with
+          | false -> false
+          | true -> helper ~target (direction position) (depth + 1) direction)
+    in
+
+    let all_positions = all_positions game in
+    match
+      List.fold ~init:None all_positions ~f:(fun winner_found position ->
+          match (winner_found, get_piece position) with
+          | Some _, _ -> winner_found
+          | None, None -> None
+          | None, Some target ->
+              let win_condition_exists =
+                List.exists Position.half_offsets ~f:(fun direction ->
+                    helper ~target position 0 direction)
+              in
+              if win_condition_exists then Some target else None)
+    with
+    | Some winner -> Evaluation.Game_over { winner = Some winner }
+    | None -> (
+        match List.is_empty (available_moves game) with
+        | true -> Evaluation.Game_over { winner = None }
+        | false -> Evaluation.Game_continues)
+
+let%expect_test "evaluate_win_for_x" =
+  let result = evaluate win_for_x in
+  print_s (Evaluation.sexp_of_t result);
+  [%expect {| (Game_over (winner (X))) |}];
+  return ()
+
+let%expect_test "evaluate_continuing_game" =
+  let result = evaluate non_win in
+  print_s (Evaluation.sexp_of_t result);
+  [%expect {| Game_continues |}];
+  return ()
+
+let%expect_test "evaluate_illegal_board" =
+  let illegal_game = init_game
+    [
+      ({ row = 8; column = 2 }, X);
+    ] in
+  print_s (Evaluation.sexp_of_t (evaluate illegal_game));
+  [%expect {| Illegal_move |}];
+  return ()
+  
 
 (* Exercise 3 *)
 let winning_moves ~(me : Piece.t) (game : Game.t) : Position.t list =

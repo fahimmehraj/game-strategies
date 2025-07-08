@@ -24,3 +24,7 @@ let all_offsets =
   [
     up; up >> right; right; right >> down; down; down >> left; left; left >> up;
   ]
+
+let half_offsets =
+  let ( >> ) = Fn.compose in
+  [ right; right >> down; down; down >> left ]
