@@ -104,25 +104,25 @@ let%expect_test "available_moves" =
 
 (* Exercise 2 *)
 let evaluate (game : Game.t) : Evaluation.t =
+  let get_piece position = Map.find game.board position in
+  let rec is_winnable ~target position depth direction =
+    match
+      (depth >= Game_kind.win_length game.game_kind, get_piece position)
+    with
+    | true, _ -> true
+    | false, None -> false
+    | false, Some piece -> (
+        match Piece.equal target piece with
+        | false -> false
+        | true -> is_winnable ~target (direction position) (depth + 1) direction
+        )
+  in
   (* check if all pieces in bound *)
   if
     Map.existsi game.board ~f:(fun ~key ~data:_ ->
         not (Position.in_bounds key ~game_kind:game.game_kind))
   then Evaluation.Illegal_move
   else
-    let get_piece position = Map.find game.board position in
-    let rec helper ~target position depth direction =
-      match
-        (depth >= Game_kind.win_length game.game_kind, get_piece position)
-      with
-      | true, _ -> true
-      | false, None -> false
-      | false, Some piece -> (
-          match Piece.equal target piece with
-          | false -> false
-          | true -> helper ~target (direction position) (depth + 1) direction)
-    in
-
     let all_positions = all_positions game in
     match
       List.fold ~init:None all_positions ~f:(fun winner_found position ->
@@ -132,7 +132,7 @@ let evaluate (game : Game.t) : Evaluation.t =
           | None, Some target ->
               let win_condition_exists =
                 List.exists Position.half_offsets ~f:(fun direction ->
-                    helper ~target position 0 direction)
+                    is_winnable ~target position 0 direction)
               in
               if win_condition_exists then Some target else None)
     with
@@ -155,20 +155,19 @@ let%expect_test "evaluate_continuing_game" =
   return ()
 
 let%expect_test "evaluate_illegal_board" =
-  let illegal_game = init_game
-    [
-      ({ row = 8; column = 2 }, X);
-    ] in
+  let illegal_game = init_game [ ({ row = 8; column = 2 }, X) ] in
   print_s (Evaluation.sexp_of_t (evaluate illegal_game));
   [%expect {| Illegal_move |}];
   return ()
-  
 
 (* Exercise 3 *)
 let winning_moves ~(me : Piece.t) (game : Game.t) : Position.t list =
-  ignore me;
-  ignore game;
-  failwith "Implement me!"
+  available_moves game
+  |> List.filter ~f:(fun move ->
+         match evaluate (Game.set_piece game move me) with
+         | Evaluation.Game_over { winner = Some winner } ->
+             Piece.equal winner me
+         | _ -> false)
 
 (* Exercise 4 *)
 let losing_moves ~(me : Piece.t) (game : Game.t) : Position.t list =
