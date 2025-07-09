@@ -262,6 +262,46 @@ let command =
 
 (* Exercise 5 *)
 let make_move ~(game : Game.t) ~(you_play : Piece.t) : Position.t =
-  ignore game;
-  ignore you_play;
-  failwith "Implement me!"
+  match winning_moves ~me:you_play game with
+  | [] -> (
+      match
+        available_moves game
+        |> List.filter ~f:(fun move ->
+               not
+                 (List.mem
+                    (losing_moves ~me:you_play game)
+                    move ~equal:Position.equal))
+        |> List.random_element
+      with
+      | Some available_move -> available_move
+      | None -> List.random_element_exn (available_moves game))
+  | moves -> List.random_element_exn moves
+
+let%expect_test "make_move_easy_win" =
+  let data =
+    init_game
+      [
+        ({ row = 0; column = 0 }, X);
+        ({ row = 1; column = 0 }, X);
+        ({ row = 0; column = 1 }, O);
+        ({ row = 1; column = 1 }, O);
+      ]
+  in
+  let x_next_move = make_move ~game:data ~you_play:X in
+  print_s [%sexp (x_next_move : Position.t)];
+  [%expect {| ((row 2) (column 0)) |}];
+  return ()
+
+let%expect_test "make_move_block_win" =
+  let data =
+    init_game
+      [
+        ({ row = 0; column = 0 }, X);
+        ({ row = 0; column = 2 }, X);
+        ({ row = 1; column = 1 }, O);
+      ]
+  in
+  let o_next_move = make_move ~game:data ~you_play:O in
+  print_s [%sexp (o_next_move : Position.t)];
+  [%expect {| ((row 0) (column 1)) |}];
+  return ()
