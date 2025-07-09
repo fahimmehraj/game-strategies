@@ -207,6 +207,70 @@ let%expect_test "everywhere_but_one_winning_move" =
        ((row 2) (column 1)) ((row 2) (column 2))) |}];
   return ()
 
+(* Exercise 6 *)
+let available_moves_that_do_not_immediately_lose ~(me : Piece.t) (game : Game.t)
+    =
+  available_moves game
+  |> List.filter ~f:(fun move ->
+         match
+           winning_moves ~me:(Piece.flip me) (Game.set_piece game move me)
+         with
+         | [] -> true
+         | _ -> false)
+
+let%expect_test "available_moves_that_do_not_immediately_lose" =
+  let data =
+    init_game
+      [
+        ({ row = 0; column = 0 }, X);
+        ({ row = 1; column = 0 }, X);
+        ({ row = 0; column = 1 }, O);
+      ]
+  in
+  let moves = available_moves_that_do_not_immediately_lose ~me:O data in
+  print_s [%sexp (moves : Position.t list)];
+  [%expect {| (((row 2) (column 0))) |}];
+  return ()
+
+(* Exercise 5 *)
+let make_move ~(game : Game.t) ~(you_play : Piece.t) : Position.t =
+  match winning_moves ~me:you_play game with
+  | [] -> (
+      match available_moves_that_do_not_immediately_lose ~me:you_play game with
+      | move :: _ -> move
+      (* lose anyways *)
+      | [] -> List.hd_exn (available_moves game))
+  | move :: _ -> move
+
+let%expect_test "make_move_easy_win" =
+  let data =
+    init_game
+      [
+        ({ row = 0; column = 0 }, X);
+        ({ row = 1; column = 0 }, X);
+        ({ row = 0; column = 1 }, O);
+        ({ row = 1; column = 1 }, O);
+      ]
+  in
+  let x_next_move = make_move ~game:data ~you_play:X in
+  print_s [%sexp (x_next_move : Position.t)];
+  [%expect {| ((row 2) (column 0)) |}];
+  return ()
+
+let%expect_test "make_move_block_win" =
+  let data =
+    init_game
+      [
+        ({ row = 0; column = 0 }, X);
+        ({ row = 0; column = 2 }, X);
+        ({ row = 1; column = 1 }, O);
+      ]
+  in
+  let o_next_move = make_move ~game:data ~you_play:O in
+  print_s [%sexp (o_next_move : Position.t)];
+  [%expect {| ((row 0) (column 1)) |}];
+  return ()
+
 let exercise_one =
   Command.async ~summary:"Exercise 1: Where can I move?"
     (let%map_open.Command () = return () in
@@ -251,6 +315,23 @@ let exercise_four =
        print_s [%sexp (losing_moves : Position.t list)];
        return ())
 
+let exercise_five =
+  Command.async ~summary:"Exercise 5: Make a move"
+    (let%map_open.Command () = return () and piece = piece_flag in
+     fun () ->
+       let data =
+         init_game
+           [
+             ({ row = 0; column = 0 }, X);
+             ({ row = 1; column = 0 }, X);
+             ({ row = 0; column = 1 }, O);
+             ({ row = 1; column = 1 }, O);
+           ]
+       in
+       let x_next_move = make_move ~game:data ~you_play:piece in
+       print_s [%sexp (x_next_move : Position.t)];
+       return ())
+
 let command =
   Command.group ~summary:"Exercises"
     [
@@ -258,50 +339,5 @@ let command =
       ("two", exercise_two);
       ("three", exercise_three);
       ("four", exercise_four);
+      ("five", exercise_five);
     ]
-
-(* Exercise 5 *)
-let make_move ~(game : Game.t) ~(you_play : Piece.t) : Position.t =
-  match winning_moves ~me:you_play game with
-  | [] -> (
-      match
-        available_moves game
-        |> List.filter ~f:(fun move ->
-               not
-                 (List.mem
-                    (losing_moves ~me:you_play game)
-                    move ~equal:Position.equal))
-        |> List.random_element
-      with
-      | Some available_move -> available_move
-      | None -> List.random_element_exn (available_moves game))
-  | moves -> List.random_element_exn moves
-
-let%expect_test "make_move_easy_win" =
-  let data =
-    init_game
-      [
-        ({ row = 0; column = 0 }, X);
-        ({ row = 1; column = 0 }, X);
-        ({ row = 0; column = 1 }, O);
-        ({ row = 1; column = 1 }, O);
-      ]
-  in
-  let x_next_move = make_move ~game:data ~you_play:X in
-  print_s [%sexp (x_next_move : Position.t)];
-  [%expect {| ((row 2) (column 0)) |}];
-  return ()
-
-let%expect_test "make_move_block_win" =
-  let data =
-    init_game
-      [
-        ({ row = 0; column = 0 }, X);
-        ({ row = 0; column = 2 }, X);
-        ({ row = 1; column = 1 }, O);
-      ]
-  in
-  let o_next_move = make_move ~game:data ~you_play:O in
-  print_s [%sexp (o_next_move : Position.t)];
-  [%expect {| ((row 0) (column 1)) |}];
-  return ()
