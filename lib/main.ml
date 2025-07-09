@@ -232,15 +232,35 @@ let%expect_test "available_moves_that_do_not_immediately_lose" =
   [%expect {| (((row 2) (column 0))) |}];
   return ()
 
+let rec minimax (game : Game.t) (piece : Piece.t) (depth : int) =
+  match evaluate game with
+  | Game_over { winner = Some winner } ->
+      if Piece.equal winner piece then Float.infinity else Float.neg_infinity
+  | Game_over _ -> 0.
+  | Illegal_move -> failwith "Can't evaluate illegal move"
+  | Game_continues -> (
+      if depth = 0 then 0.
+      else
+        let next_positions = available_moves game in
+        match
+          List.map next_positions ~f:(fun pos ->
+             (-1.) *. minimax (Game.set_piece game pos piece) (Piece.flip piece) (depth - 1))
+          |> List.max_elt ~compare:Float.compare
+        with
+        | Some maximum -> maximum
+        | None -> failwith "Available move always exists")
+
 (* Exercise 5 *)
 let make_move ~(game : Game.t) ~(you_play : Piece.t) : Position.t =
-  match winning_moves ~me:you_play game with
-  | [] -> (
-      match available_moves_that_do_not_immediately_lose ~me:you_play game with
-      | move :: _ -> move
-      (* lose anyways *)
-      | [] -> List.hd_exn (available_moves game))
-  | move :: _ -> move
+  match
+    available_moves game
+    |> List.map ~f:(fun move ->
+           (move, minimax (Game.set_piece game move you_play) you_play 100))
+    |> List.max_elt ~compare:(fun (_, score1) (_, score2) ->
+           Float.compare score1 score2)
+  with
+  | Some (move, _maximum) -> move
+  | None -> failwith "Move should exist"
 
 let%expect_test "make_move_easy_win" =
   let data =
