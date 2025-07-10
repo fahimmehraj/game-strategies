@@ -120,7 +120,7 @@ let evaluate (game : Game.t) : Evaluation.t =
           | None -> None
           | Some target ->
               let win_condition_exists =
-                List.exists Position.half_offsets ~f:(fun direction ->
+                List.exists Position.all_offsets ~f:(fun direction ->
                     is_winnable ~target position 0 direction)
               in
               if win_condition_exists then Some target else None)
@@ -255,11 +255,13 @@ let make_move ~(game : Game.t) ~(you_play : Piece.t) : Position.t =
   match
     available_moves game
     |> List.map ~f:(fun move ->
-           (move, minimax (Game.set_piece game move you_play) you_play 100))
+           (move, (-1.) *. minimax (Game.set_piece game move you_play) (Piece.flip you_play) 1000))
     |> List.max_elt ~compare:(fun (_, score1) (_, score2) ->
            Float.compare score1 score2)
   with
-  | Some (move, _maximum) -> move
+  | Some (move, _maximum) -> 
+    (* print_s [%sexp (_maximum : float)]; *)
+    move
   | None -> failwith "Move should exist"
 
 let%expect_test "make_move_easy_win" =
