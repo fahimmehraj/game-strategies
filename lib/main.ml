@@ -2,6 +2,376 @@ open! Core
 open! Async
 open! Game_strategies_common_lib
 
+let diagonals =
+  [
+    [ (0, 14) ];
+    [ (0, 13); (1, 14) ];
+    [ (0, 12); (1, 13); (2, 14) ];
+    [ (0, 11); (1, 12); (2, 13); (3, 14) ];
+    [ (0, 10); (1, 11); (2, 12); (3, 13); (4, 14) ];
+    [ (0, 9); (1, 10); (2, 11); (3, 12); (4, 13); (5, 14) ];
+    [ (0, 8); (1, 9); (2, 10); (3, 11); (4, 12); (5, 13); (6, 14) ];
+    [ (0, 7); (1, 8); (2, 9); (3, 10); (4, 11); (5, 12); (6, 13); (7, 14) ];
+    [
+      (0, 6); (1, 7); (2, 8); (3, 9); (4, 10); (5, 11); (6, 12); (7, 13); (8, 14);
+    ];
+    [
+      (0, 5);
+      (1, 6);
+      (2, 7);
+      (3, 8);
+      (4, 9);
+      (5, 10);
+      (6, 11);
+      (7, 12);
+      (8, 13);
+      (9, 14);
+    ];
+    [
+      (0, 4);
+      (1, 5);
+      (2, 6);
+      (3, 7);
+      (4, 8);
+      (5, 9);
+      (6, 10);
+      (7, 11);
+      (8, 12);
+      (9, 13);
+      (10, 14);
+    ];
+    [
+      (0, 3);
+      (1, 4);
+      (2, 5);
+      (3, 6);
+      (4, 7);
+      (5, 8);
+      (6, 9);
+      (7, 10);
+      (8, 11);
+      (9, 12);
+      (10, 13);
+      (11, 14);
+    ];
+    [
+      (0, 2);
+      (1, 3);
+      (2, 4);
+      (3, 5);
+      (4, 6);
+      (5, 7);
+      (6, 8);
+      (7, 9);
+      (8, 10);
+      (9, 11);
+      (10, 12);
+      (11, 13);
+      (12, 14);
+    ];
+    [
+      (0, 1);
+      (1, 2);
+      (2, 3);
+      (3, 4);
+      (4, 5);
+      (5, 6);
+      (6, 7);
+      (7, 8);
+      (8, 9);
+      (9, 10);
+      (10, 11);
+      (11, 12);
+      (12, 13);
+      (13, 14);
+    ];
+    [
+      (0, 0);
+      (1, 1);
+      (2, 2);
+      (3, 3);
+      (4, 4);
+      (5, 5);
+      (6, 6);
+      (7, 7);
+      (8, 8);
+      (9, 9);
+      (10, 10);
+      (11, 11);
+      (12, 12);
+      (13, 13);
+      (14, 14);
+    ];
+    [
+      (1, 0);
+      (2, 1);
+      (3, 2);
+      (4, 3);
+      (5, 4);
+      (6, 5);
+      (7, 6);
+      (8, 7);
+      (9, 8);
+      (10, 9);
+      (11, 10);
+      (12, 11);
+      (13, 12);
+      (14, 13);
+    ];
+    [
+      (2, 0);
+      (3, 1);
+      (4, 2);
+      (5, 3);
+      (6, 4);
+      (7, 5);
+      (8, 6);
+      (9, 7);
+      (10, 8);
+      (11, 9);
+      (12, 10);
+      (13, 11);
+      (14, 12);
+    ];
+    [
+      (3, 0);
+      (4, 1);
+      (5, 2);
+      (6, 3);
+      (7, 4);
+      (8, 5);
+      (9, 6);
+      (10, 7);
+      (11, 8);
+      (12, 9);
+      (13, 10);
+      (14, 11);
+    ];
+    [
+      (4, 0);
+      (5, 1);
+      (6, 2);
+      (7, 3);
+      (8, 4);
+      (9, 5);
+      (10, 6);
+      (11, 7);
+      (12, 8);
+      (13, 9);
+      (14, 10);
+    ];
+    [
+      (5, 0);
+      (6, 1);
+      (7, 2);
+      (8, 3);
+      (9, 4);
+      (10, 5);
+      (11, 6);
+      (12, 7);
+      (13, 8);
+      (14, 9);
+    ];
+    [
+      (6, 0); (7, 1); (8, 2); (9, 3); (10, 4); (11, 5); (12, 6); (13, 7); (14, 8);
+    ];
+    [ (7, 0); (8, 1); (9, 2); (10, 3); (11, 4); (12, 5); (13, 6); (14, 7) ];
+    [ (8, 0); (9, 1); (10, 2); (11, 3); (12, 4); (13, 5); (14, 6) ];
+    [ (9, 0); (10, 1); (11, 2); (12, 3); (13, 4); (14, 5) ];
+    [ (10, 0); (11, 1); (12, 2); (13, 3); (14, 4) ];
+    [ (11, 0); (12, 1); (13, 2); (14, 3) ];
+    [ (12, 0); (13, 1); (14, 2) ];
+    [ (13, 0); (14, 1) ];
+    [ (14, 0) ];
+    [ (0, 0) ];
+    [ (0, 1); (1, 0) ];
+    [ (0, 2); (1, 1); (2, 0) ];
+    [ (0, 3); (1, 2); (2, 1); (3, 0) ];
+    [ (0, 4); (1, 3); (2, 2); (3, 1); (4, 0) ];
+    [ (0, 5); (1, 4); (2, 3); (3, 2); (4, 1); (5, 0) ];
+    [ (0, 6); (1, 5); (2, 4); (3, 3); (4, 2); (5, 1); (6, 0) ];
+    [ (0, 7); (1, 6); (2, 5); (3, 4); (4, 3); (5, 2); (6, 1); (7, 0) ];
+    [ (0, 8); (1, 7); (2, 6); (3, 5); (4, 4); (5, 3); (6, 2); (7, 1); (8, 0) ];
+    [
+      (0, 9);
+      (1, 8);
+      (2, 7);
+      (3, 6);
+      (4, 5);
+      (5, 4);
+      (6, 3);
+      (7, 2);
+      (8, 1);
+      (9, 0);
+    ];
+    [
+      (0, 10);
+      (1, 9);
+      (2, 8);
+      (3, 7);
+      (4, 6);
+      (5, 5);
+      (6, 4);
+      (7, 3);
+      (8, 2);
+      (9, 1);
+      (10, 0);
+    ];
+    [
+      (0, 11);
+      (1, 10);
+      (2, 9);
+      (3, 8);
+      (4, 7);
+      (5, 6);
+      (6, 5);
+      (7, 4);
+      (8, 3);
+      (9, 2);
+      (10, 1);
+      (11, 0);
+    ];
+    [
+      (0, 12);
+      (1, 11);
+      (2, 10);
+      (3, 9);
+      (4, 8);
+      (5, 7);
+      (6, 6);
+      (7, 5);
+      (8, 4);
+      (9, 3);
+      (10, 2);
+      (11, 1);
+      (12, 0);
+    ];
+    [
+      (0, 13);
+      (1, 12);
+      (2, 11);
+      (3, 10);
+      (4, 9);
+      (5, 8);
+      (6, 7);
+      (7, 6);
+      (8, 5);
+      (9, 4);
+      (10, 3);
+      (11, 2);
+      (12, 1);
+      (13, 0);
+    ];
+    [
+      (0, 14);
+      (1, 13);
+      (2, 12);
+      (3, 11);
+      (4, 10);
+      (5, 9);
+      (6, 8);
+      (7, 7);
+      (8, 6);
+      (9, 5);
+      (10, 4);
+      (11, 3);
+      (12, 2);
+      (13, 1);
+      (14, 0);
+    ];
+    [
+      (1, 14);
+      (2, 13);
+      (3, 12);
+      (4, 11);
+      (5, 10);
+      (6, 9);
+      (7, 8);
+      (8, 7);
+      (9, 6);
+      (10, 5);
+      (11, 4);
+      (12, 3);
+      (13, 2);
+      (14, 1);
+    ];
+    [
+      (2, 14);
+      (3, 13);
+      (4, 12);
+      (5, 11);
+      (6, 10);
+      (7, 9);
+      (8, 8);
+      (9, 7);
+      (10, 6);
+      (11, 5);
+      (12, 4);
+      (13, 3);
+      (14, 2);
+    ];
+    [
+      (3, 14);
+      (4, 13);
+      (5, 12);
+      (6, 11);
+      (7, 10);
+      (8, 9);
+      (9, 8);
+      (10, 7);
+      (11, 6);
+      (12, 5);
+      (13, 4);
+      (14, 3);
+    ];
+    [
+      (4, 14);
+      (5, 13);
+      (6, 12);
+      (7, 11);
+      (8, 10);
+      (9, 9);
+      (10, 8);
+      (11, 7);
+      (12, 6);
+      (13, 5);
+      (14, 4);
+    ];
+    [
+      (5, 14);
+      (6, 13);
+      (7, 12);
+      (8, 11);
+      (9, 10);
+      (10, 9);
+      (11, 8);
+      (12, 7);
+      (13, 6);
+      (14, 5);
+    ];
+    [
+      (6, 14);
+      (7, 13);
+      (8, 12);
+      (9, 11);
+      (10, 10);
+      (11, 9);
+      (12, 8);
+      (13, 7);
+      (14, 6);
+    ];
+    [ (7, 14); (8, 13); (9, 12); (10, 11); (11, 10); (12, 9); (13, 8); (14, 7) ];
+    [ (8, 14); (9, 13); (10, 12); (11, 11); (12, 10); (13, 9); (14, 8) ];
+    [ (9, 14); (10, 13); (11, 12); (12, 11); (13, 10); (14, 9) ];
+    [ (10, 14); (11, 13); (12, 12); (13, 11); (14, 10) ];
+    [ (11, 14); (12, 13); (13, 12); (14, 11) ];
+    [ (12, 14); (13, 13); (14, 12) ];
+    [ (13, 14); (14, 13) ];
+    [ (14, 14) ];
+  ]
+  |> List.map ~f:(fun diag ->
+         List.map diag ~f:(fun (row, column) -> { Position.row; column }))
+
 (* This is a helper function for constructing games from a list of positions *)
 let init_game (board : (Position.t * Piece.t) list) : Game.t =
   { (Game.empty Tic_tac_toe) with board = Position.Map.of_alist_exn board }
@@ -75,8 +445,23 @@ let all_positions (game : Game.t) : Position.t list =
 (* Exercise 1 *)
 let available_moves (game : Game.t) : Position.t list =
   let all_positions = all_positions game in
-  List.filter all_positions ~f:(fun key ->
-      Option.is_none (Map.find game.board key))
+  let preferred_positions =
+    List.filter all_positions ~f:(fun pos ->
+        let neighbors =
+          List.map Position.all_offsets ~f:(fun direction -> direction pos)
+          |> List.filter ~f:(fun nei ->
+                 Position.in_bounds nei ~game_kind:game.game_kind)
+          |> List.filter ~f:(fun nei ->
+                 Option.is_some (Map.find game.board nei))
+        in
+        Option.is_none (Map.find game.board pos)
+        && not (List.is_empty neighbors))
+  in
+  match preferred_positions with
+  | [] ->
+      List.filter all_positions ~f:(fun pos ->
+          Option.is_none (Map.find game.board pos))
+  | preferred_positions -> preferred_positions
 
 let%expect_test "available_moves" =
   print_s [%sexp (available_moves win_for_x : Position.t list)];
@@ -232,36 +617,145 @@ let%expect_test "available_moves_that_do_not_immediately_lose" =
   [%expect {| (((row 2) (column 0))) |}];
   return ()
 
-let rec minimax (game : Game.t) (piece : Piece.t) (depth : int) =
+let get_streaks (game : Game.t) (player : Piece.t) =
+  let weight piece = if Piece.equal piece player then 1. else -1. in
+  let score_streak streak = Float.int_pow 2. streak *. weight player in
+
+  let rows =
+    Array.init (Game_kind.board_length game.game_kind) ~f:(fun row ->
+        Array.init (Game_kind.board_length game.game_kind) ~f:(fun column ->
+            Map.find game.board { row; column }))
+  in
+
+  let horizontal_score =
+    Array.fold rows ~init:0. ~f:(fun score row ->
+        let (_current, streak, row_score) : Piece.t option * int * float =
+          Array.fold row ~init:(None, 0, 0.)
+            ~f:(fun (current, streak, score) piece ->
+              match (current, piece) with
+              | None, None | _, None -> (None, 0, score)
+              | None, Some piece -> (Some piece, 1, score)
+              | Some current, Some piece -> (
+                  match Piece.equal current piece with
+                  | false -> (Some piece, 1, score +. score_streak streak)
+                  | true -> (Some piece, streak + 1, score)))
+        in
+        let row_score = row_score +. score_streak streak in
+        score +. row_score)
+  in
+
+  let columns =
+    Array.init (Game_kind.board_length game.game_kind) ~f:(fun row ->
+        Array.init (Game_kind.board_length game.game_kind) ~f:(fun column ->
+            Map.find game.board { row = column; column = row }))
+  in
+
+  let vertical_score =
+    Array.fold columns ~init:0. ~f:(fun score row ->
+        let (_current, streak, row_score) : Piece.t option * int * float =
+          Array.fold row ~init:(None, 0, 0.)
+            ~f:(fun (current, streak, score) piece ->
+              match (current, piece) with
+              | None, None | _, None -> (None, 0, score)
+              | None, Some piece -> (Some piece, 1, score)
+              | Some current, Some piece -> (
+                  match Piece.equal current piece with
+                  | false -> (Some piece, 1, score +. score_streak streak)
+                  | true -> (Some piece, streak + 1, score)))
+        in
+        let row_score = row_score +. score_streak streak in
+        score +. row_score)
+  in
+  (* 0, 0 *)
+  (* 0, 1 *)
+  (* 1, 0 *)
+  (* 0, 2 *)
+  (* 2, 0*)
+
+  let diagonals =
+    List.map diagonals ~f:(fun diag ->
+        List.map diag ~f:(fun pos -> Map.find game.board pos))
+  in
+  let diagonal_score =
+    List.fold diagonals ~init:0. ~f:(fun score row ->
+        let (_current, streak, row_score) : Piece.t option * int * float =
+          List.fold row ~init:(None, 0, 0.)
+            ~f:(fun (current, streak, score) piece ->
+              match (current, piece) with
+              | None, None | _, None -> (None, 0, score)
+              | None, Some piece -> (Some piece, 1, score)
+              | Some current, Some piece -> (
+                  match Piece.equal current piece with
+                  | false -> (Some piece, 1, score +. score_streak streak)
+                  | true -> (Some piece, streak + 1, score)))
+        in
+        let row_score = row_score +. score_streak streak in
+        score +. row_score)
+  in
+  let result = (horizontal_score +. vertical_score +. diagonal_score) *. 10000000. in
+  print_s [%sexp (result : float)];
+  result
+
+let score ~(node : Game.t) ~(us : Piece.t) =
+  if Game_kind.equal Game_kind.Tic_tac_toe node.game_kind then 0.
+  else
+    let _board = node.board in
+    (* let all_pos = all_positions node in
+    let centering =
+      List.fold all_pos ~init:0 ~f:(fun total pos ->
+          let closeness = 98 - Position.from_center pos in
+          match Map.find board pos with
+          | Some piece ->
+              if Piece.equal us piece then total + closeness
+              else total - closeness
+          | None -> total)
+    in *)
+
+    get_streaks node us
+
+let rec minimax (game : Game.t) (piece : Piece.t) (depth : int) alpha beta =
   match evaluate game with
   | Game_over { winner = Some winner } ->
       if Piece.equal winner piece then Float.infinity else Float.neg_infinity
   | Game_over _ -> 0.
   | Illegal_move -> failwith "Can't evaluate illegal move"
-  | Game_continues -> (
-      if depth = 0 then 0.
+  | Game_continues ->
+      if depth = 0 then score ~node:game ~us:piece
       else
         let next_positions = available_moves game in
-        match
-          List.map next_positions ~f:(fun pos ->
-             (-1.) *. minimax (Game.set_piece game pos piece) (Piece.flip piece) (depth - 1))
-          |> List.max_elt ~compare:Float.compare
-        with
-        | Some maximum -> maximum
-        | None -> failwith "Available move always exists")
+        List.fold_until next_positions
+          ~init:(Float.neg_infinity, alpha)
+          ~f:(fun (current_max, alpha) pos ->
+            let result =
+              Float.max
+                (-1.
+                *. minimax
+                     (Game.set_piece game pos piece)
+                     (Piece.flip piece) (depth - 1) (-1. *. beta) (-1. *. alpha)
+                )
+                current_max
+            in
+            let alpha = Float.max alpha result in
+            if Float.(alpha >= beta) then Stop result
+            else Continue (result, alpha))
+          ~finish:(fun (result, _) -> result)
 
 (* Exercise 5 *)
 let make_move ~(game : Game.t) ~(you_play : Piece.t) : Position.t =
   match
     available_moves game
     |> List.map ~f:(fun move ->
-           (move, (-1.) *. minimax (Game.set_piece game move you_play) (Piece.flip you_play) 1000))
+           ( move,
+             -1.
+             *. minimax
+                  (Game.set_piece game move you_play)
+                  (Piece.flip you_play) 2 Float.neg_infinity Float.infinity ))
     |> List.max_elt ~compare:(fun (_, score1) (_, score2) ->
            Float.compare score1 score2)
   with
-  | Some (move, _maximum) -> 
-    (* print_s [%sexp (_maximum : float)]; *)
-    move
+  | Some (move, _maximum) ->
+      (* print_s [%sexp (_maximum : float)]; *)
+      move
   | None -> failwith "Move should exist"
 
 let%expect_test "make_move_easy_win" =

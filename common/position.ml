@@ -28,3 +28,6 @@ let all_offsets =
 let half_offsets =
   let ( >> ) = Fn.compose in
   [ right; right >> down; down; down >> left ]
+
+let from_center t =
+  ((t.row - 7) * (t.row - 7)) + ((t.column - 7) * (t.column - 7))
